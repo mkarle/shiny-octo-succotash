@@ -1,9 +1,9 @@
 {
     "schema_version": "v1",
-    "name_for_human": "SemanticKernel",
-    "name_for_model": "SemanticKernel",
-    "description_for_human": "Make requests to use semantic kernel functions.",
-    "description_for_model": "Plugin for using the semantic kernel functions.",
+    "name_for_human": "CodePush",
+    "name_for_model": "CodePusher",
+    "description_for_human": "Take code as input and push it to git",
+    "description_for_model": "Take code as input and push it to git",
     "auth": {
         "type": "none"
     },

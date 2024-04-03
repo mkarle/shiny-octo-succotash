@@ -16,7 +16,8 @@
             },
             "args": [
                 "run",
-                "-p 5050"
+                "-p 5050",
+                "--no-reload"
             ],
             "jinja": true,
             "justMyCode": true,

@@ -1,22 +1,49 @@
 openapi: 3.1.0
 info:
-  title: Semantic Kernel Plugin
-  description: A plugin that allows the user to call Semantic Kernel Functions.
+  title: Code Push Plugin
+  description: A plugin that allows the user to push code to git
   version: 'v1'
 servers:
   - url: http://localhost:5050
 paths:
-  /skills/FunSkill/functions/Joke:
+  /push_code:
     post:
-      operationId: executeJokeFunction
-      description: |
-        Execute the joke semantic function; submit the input and style as a JSON object in the payload input, e.g. {"input": "<JokeSubject>", "style": "<JokeStyle>"}
+      operationId: push_code
+      description: Pushes the specified file to git
       requestBody:
         required: True
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/executeJokeFunctionRequest'
+              $ref: '#/components/schemas/pushFunctionRequest'
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: ERROR
+        "401":
+          description: Unauthorized
+        "404":
+          description: File Not Found
+  /download_code:
+    post:
+      operationId: download_code
+      description: Takes code and downloads it to file
+      requestBody:
+        required: True
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/downloadFunctionRequest'
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Server Error
+  /get_active_branch:
+    get:
+      operationId: get_active_branch
+      description: Returns the active branch that the user is using
       responses:
         "200":
           description: OK
@@ -24,14 +51,57 @@ paths:
             text/plain:
               schema:
                 type: string
+  /login:
+    post:
+      operationId: login
+      description: Logs the user in
+      requestBody:
+        required: True
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+              required:
+                - key
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+  /get_key:
+    get:
+      operationId: get_key
+      description: Returns the key of the user
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+
 components:
   schemas:
-    executeJokeFunctionRequest:
+    downloadFunctionRequest:
       type: object
       properties:
-        input:
+        code:
           type: string
-        style:
+        filename:
           type: string
       required:
-        - input
+        - code
+        - filename
+    pushFunctionRequest:
+      type: object
+      properties:
+        filename:
+          type: string
+        branch:
+          type: string
+      required:
+        - filename
+        - branch

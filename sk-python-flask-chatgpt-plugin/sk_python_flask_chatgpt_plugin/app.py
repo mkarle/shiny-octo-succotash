@@ -1,45 +1,70 @@
-import logging
+import os
 from flask import Flask, request, Response, send_file
 from flask_cors import CORS
-from semantic_kernel.kernel_exception import KernelException
+#from semantic_kernel.kernel_exception import KernelException
 
-from sk_python_flask_chatgpt_plugin.kernel_utils import (
-    create_kernel_for_request,
-    create_context_variables_from_request,
-)
+#from sk_python_flask_chatgpt_plugin.kernel_utils import (
+#    create_kernel_for_request,
+##    create_context_variables_from_request,
+#)
 
 
 app = Flask(__name__)
 CORS(app)
+app.config['login'] = False
+app.config['downloaded'] = False
 
-
-@app.route("/skills/<skill_name>/functions/<function_name>", methods=["POST"])
-def execute_semantic_function(skill_name, function_name):
-    logging.info(
-        f"Received request for skill {skill_name} and function {function_name}"
-    )
-
-    kernel, error = create_kernel_for_request(request.headers, skill_name)
-    if error:
-        return error
+@app.route("/download_code", methods=["POST"])
+def execute_download():
     try:
-        sk_func = kernel.skills.get_function(skill_name, function_name)
-    except KernelException:
-        logging.exception(
-            f"Could not find function {function_name} in skill {skill_name}"
-        )
-        return f"Could not find function {function_name} in skill {skill_name}", 404
+        body = request.get_json()
+        print(body)
+        filename = body['filename']
+        if not filename:
+            filename = 'code.py'
+        code = body['code']
+        code = code.encode('latin-1', 'backslashreplace').decode('unicode-escape')
+        with open(filename, 'w') as f:
+            f.write(code)
+        app.config['downloaded'] = True
+        print("Successfully downloaded code")
+        return 'Success', 200
+    except:
+        return 'Failure', 500
 
-    context_variables = create_context_variables_from_request(request)
+@app.route("/push_code", methods=["POST"])
+def execute_push():
+    if not app.config['login']:
+        return 'Unauthorized', 401
+    body = request.get_json()
+    branch = body['branch']
+    filename = body['filename']
+    if not os.path.exists(filename):
+        return 'File not found', 404
+    if branch == 'my_cool_branch':
+        print(f"Successfully pushed {filename} to {branch}")
+        return 'OK', 200
+    print(f'branch was {branch}')
+    return 'branch not found', 404
 
-    result = sk_func(variables=context_variables)
+@app.route("/login", methods=["POST"])
+def execute_login():
+    body = request.get_json()
+    key = body['key']
+    if key == '123Key':
+        app.config['login'] = True
+        print(f"Successfully logged in with key {key}")
+        return "Successfully logged in", 200
+    else:
+        return 'Unauthorized', 401
 
-    logging.info(f"Result: {result}")
-    return str(result)
+@app.route("/get_key", methods=["GET"])
+def execute_get_login_key():
+    return '123Key', 200
 
-@app.route("/joke", methods=["POST"])
-def execute_joke():
-    return execute_semantic_function("FunSkill", "Joke")
+@app.route("/get_active_branch", methods=["GET"])
+def execute_get_active_branch():
+    return 'my_cool_branch', 200
 
 @app.route("/.well-known/ai-plugin.json", methods=["GET"])
 def get_ai_plugin():
